@@ -14,8 +14,18 @@
 #include <QStyledItemDelegate>
 #include <QTextBrowser>
 #include <QTreeWidget>
+#include <QTableWidget>
+#include <QList>
+#include <QComboBox>
+#include <QLabel>
+#include <thread>
+#include <condition_variable>
 
+
+#include "configfix.h"
 #include "expr.h"
+#include "conflict_resolver.h"
+
 
 class ConfigList;
 class ConfigItem;
@@ -72,6 +82,7 @@ public slots:
 	void saveSettings(void);
 	void setOptionMode(QAction *action);
 	void setShowName(bool on);
+	// void ShowContextMenu(const QPoint& p);
 
 signals:
 	void menuChanged(struct menu *menu);
@@ -80,6 +91,8 @@ signals:
 	void parentSelected(void);
 	void gotFocus(struct menu *);
 	void showNameChanged(bool on);
+	void selectionChanged(QList<QTreeWidgetItem*> selection);
+	void UpdateConflictsViewColorization();
 
 public:
 	void updateListAll(void)
@@ -111,6 +124,85 @@ public:
 	static void updateListAllForAll();
 
 	static QAction *showNormalAction, *showAllAction, *showPromptAction;
+	static QAction *addSymbolsFromContextMenu;
+};
+
+class ConflictsView : public QWidget {
+	// ConfigLineEdit* lineEdit;
+	Q_OBJECT
+	typedef class QWidget Parent;
+public:
+	ConflictsView(QWidget* parent, const char *name = 0);
+	~ConflictsView(void);
+	void addSymbol(struct menu * m);
+	int current_solution_number = -1;
+
+public slots:
+    void cellClicked(int, int);
+	void changeAll();
+	//triggerd by Qactions on the tool bar that adds/remove symbol
+	void addSymbol();
+	//triggered from config list right click -> add symbols
+	void addSymbolFromContextMenu();
+	void removeSymbol();
+	void menuChanged1(struct menu *);
+	void changeToNo();
+	void changeToYes();
+	void changeToModule();
+	void selectionChanged(QList<QTreeWidgetItem*> selection);
+
+
+	void applyFixButtonClick();
+	void UpdateConflictsViewColorization();
+	void updateResults();
+
+
+
+  // switches the solution table with selected solution index from  solution_output
+  void changeSolutionTable(int solution_number);
+
+  // calls satconfig to solve to get wanted value to current value
+  void calculateFixes();
+signals:
+	void showNameChanged(bool);
+	void showRangeChanged(bool);
+	void showDataChanged(bool);
+    void conflictSelected(struct menu *);
+	void refreshMenu();
+	void resultsReady();
+public:
+	QTableWidget* conflictsTable;
+	QList<Constraint> constraints;
+
+  // the comobox on the right hand side. used to select a solutio after
+  // getting solution from satconfig
+  QComboBox* solutionSelector{nullptr};
+
+  // the table which shows the selected solution showing variable = New value changes
+	QTableWidget* solutionTable{nullptr};
+
+  // Apply fixes button on the solution view
+	QPushButton* applyFixButton{nullptr};
+
+    struct sfl_list * solution_output{nullptr};
+
+	QToolBar *conflictsToolBar;
+	struct menu * currentSelectedMenu ;
+	QLabel* numSolutionLabel{nullptr};
+	//currently selected config items in configlist.
+	QList<QTreeWidgetItem*> currentSelection;
+	QAction *fixConflictsAction_{nullptr};
+	void runSatConfAsync();
+	std::thread* runSatConfAsyncThread{nullptr};
+
+	std::mutex satconf_mutex;
+	std::condition_variable satconf_cancellation_cv;
+	bool satconf_cancelled{false};
+
+	//colorize the symbols
+	// void ColorizeSolutionTable();
+
+
 };
 
 class ConfigItem : public QTreeWidgetItem {
@@ -223,6 +315,10 @@ public:
 public slots:
 	void saveSettings(void);
 	void search(void);
+	void UpdateConflictsViewColorizationFowarder();
+signals:
+	void UpdateConflictsViewColorization();
+
 
 protected:
 	QLineEdit* editField;
@@ -258,6 +354,8 @@ public slots:
 	void showIntro(void);
 	void showAbout(void);
 	void saveSettings(void);
+	void conflictSelected(struct menu *);
+	void refreshMenu();
 
 protected:
 	void closeEvent(QCloseEvent *e);
@@ -266,10 +364,23 @@ protected:
 	ConfigList *menuList;
 	ConfigList *configList;
 	ConfigInfoView *helpText;
+	ConflictsView *conflictsView;
+	QToolBar *conflictsToolBar;
 	QAction *backAction;
 	QAction *singleViewAction;
 	QAction *splitViewAction;
 	QAction *fullViewAction;
 	QSplitter *split1;
 	QSplitter *split2;
+	QSplitter *split3;
+};
+
+class dropAbleView : public QTableWidget
+{
+public:
+    dropAbleView(QWidget *parent = nullptr);
+    ~dropAbleView();
+
+protected:
+    void dropEvent(QDropEvent *event);
 };
