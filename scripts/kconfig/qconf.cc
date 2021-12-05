@@ -1529,6 +1529,8 @@ ConfigMainWindow::ConfigMainWindow(void)
 
 	connect(configList, &ConfigList::menuChanged,
 		helpText, &ConfigInfoView::setInfo);
+	connect(configList, &ConfigList::menuChanged,
+		conflictsView, &ConflictsView::menuChanged);
 	connect(configList, &ConfigList::menuSelected,
 		this, &ConfigMainWindow::changeMenu);
 	connect(configList, &ConfigList::itemSelected,
@@ -1924,7 +1926,7 @@ ConflictsView::ConflictsView(QWidget* parent, const char *name)
 
 	verticalLayout->addWidget(conflictsToolBar);
 
-	connect(addSymbol, SIGNAL(triggered(bool)), SLOT(addSymbol()));
+	connect(addSymbol, &QAction::triggered, this, &ConflictsView::addSymbol);
 	connect(setConfigSymbolAsNo, SIGNAL(triggered(bool)), SLOT(changeToNo()));
 	connect(setConfigSymbolAsModule, SIGNAL(triggered(bool)), SLOT(changeToModule()));
 	connect(setConfigSymbolAsYes, SIGNAL(triggered(bool)), SLOT(changeToYes()));
@@ -2016,20 +2018,20 @@ void ConflictsView::changeToModule() {
 	}
 
 }
-void ConflictsView::menuChanged1(struct menu * m)
+void ConflictsView::menuChanged(struct menu * m)
 {
 	currentSelectedMenu = m;
 }
 void ConflictsView::addSymbol()
 {
-	addSymbol(currentSelectedMenu);
+	addSymbolFromMenu(currentSelectedMenu);
 }
 void ConflictsView::selectionChanged(QList<QTreeWidgetItem*> selection)
 {
 	currentSelection = selection;
 
 }
-void ConflictsView::addSymbol(struct menu *m)
+void ConflictsView::addSymbolFromMenu(struct menu *m)
 {
 	// adds a symbol to the conflict resolver list
 	if (m != nullptr){
@@ -2064,7 +2066,7 @@ void ConflictsView::addSymbolFromContextMenu() {
 		}
 
 		menu = item->menu;
-		addSymbol(menu);
+		addSymbolFromMenu(menu);
 	}
 }
 void ConflictsView::removeSymbol()
