@@ -1927,14 +1927,14 @@ ConflictsView::ConflictsView(QWidget* parent, const char *name)
 	verticalLayout->addWidget(conflictsToolBar);
 
 	connect(addSymbol, &QAction::triggered, this, &ConflictsView::addSymbol);
-	connect(setConfigSymbolAsNo, SIGNAL(triggered(bool)), SLOT(changeToNo()));
-	connect(setConfigSymbolAsModule, SIGNAL(triggered(bool)), SLOT(changeToModule()));
-	connect(setConfigSymbolAsYes, SIGNAL(triggered(bool)), SLOT(changeToYes()));
-	connect(removeSymbol, SIGNAL(triggered(bool)), SLOT(removeSymbol()));
+	connect(setConfigSymbolAsNo, &QAction::triggered,this, &ConflictsView::changeToNo);
+	connect(setConfigSymbolAsModule, &QAction::triggered,this, &ConflictsView::changeToModule);
+	connect(setConfigSymbolAsYes, &QAction::triggered,this, &ConflictsView::changeToYes);
+	connect(removeSymbol, &QAction::triggered,this, &ConflictsView::removeSymbol);
 	connect(this, SIGNAL(resultsReady()), SLOT(updateResults()));
 	//connect clicking 'calculate fixes' to 'change all symbol values to fix all conflicts'
 	// no longer used anymore for now.
-	connect(fixConflictsAction_, SIGNAL(triggered(bool)), SLOT(calculateFixes()));
+	connect(fixConflictsAction_, &QAction::triggered,this, &ConflictsView::calculateFixes);
 
 	conflictsTable = (QTableWidget*) new dropAbleView(this);
 	conflictsTable->setRowCount(0);
