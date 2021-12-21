@@ -124,7 +124,7 @@ public:
 	static void updateListAllForAll();
 
 	static QAction *showNormalAction, *showAllAction, *showPromptAction;
-	static QAction *addSymbolsFromContextMenu;
+	static QAction *addSymbolFromContextMenu;
 };
 
 class ConflictsView : public QWidget {

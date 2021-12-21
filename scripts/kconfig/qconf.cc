@@ -930,6 +930,7 @@ QList<ConfigList *> ConfigList::allLists;
 QAction *ConfigList::showNormalAction;
 QAction *ConfigList::showAllAction;
 QAction *ConfigList::showPromptAction;
+QAction *ConfigList::addSymbolFromContextMenu;
 
 void ConfigList::setAllOpen(bool open)
 {
@@ -1269,10 +1270,10 @@ ConfigSearchWindow::ConfigSearchWindow(ConfigMainWindow *parent)
 		info, &ConfigInfoView::setInfo);
 	connect(list, &ConfigList::menuChanged,
 		parent, &ConfigMainWindow::setMenuLink);
-	connect(list, SIGNAL(menuChanged(struct menu *)),
-		parent, SLOT(conflictSelected(struct menu *)));
+	connect(list, &ConfigList::menuChanged,
+		parent, &ConfigMainWindow::conflictSelected);
 
-	connect(list,SIGNAL(UpdateConflictsViewColorization()),SLOT(UpdateConflictsViewColorizationFowarder()));
+	connect(list,&ConfigList::UpdateConflictsViewColorization,this,&ConfigSearchWindow::UpdateConflictsViewColorizationFowarder);
 	layout1->addWidget(split);
 
 	QVariant x, y;
@@ -1474,6 +1475,8 @@ ConfigMainWindow::ConfigMainWindow(void)
 	ConfigList::showAllAction->setCheckable(true);
 	ConfigList::showPromptAction = new QAction("Show Prompt Options", optGroup);
 	ConfigList::showPromptAction->setCheckable(true);
+	ConfigList::addSymbolFromContextMenu = new QAction("Add symbol from context menu");
+	connect(ConfigList::addSymbolFromContextMenu, &QAction::triggered, conflictsView, &ConflictsView::addSymbolFromContextMenu);
 
 	QAction *showDebugAction = new QAction("Show Debug Info", this);
 	  showDebugAction->setCheckable(true);
@@ -2178,7 +2181,10 @@ void ConflictsView::runSatConfAsync()
 	struct symbol_dvalue* p = nullptr;
 	p = static_cast<struct symbol_dvalue*>(calloc(conflictsTable->rowCount(),sizeof(struct symbol_dvalue)));
 	if (!p)
+	{
+		std::cerr << "allocation error";
 		return;
+	}
 
 	struct sdv_list *wanted_symbols = sdv_list_init();
 
@@ -2195,7 +2201,9 @@ void ConflictsView::runSatConfAsync()
 		sdv_list_add(wanted_symbols,tmp);
 	}
 	fixConflictsAction_->setText("Cancel");
+	std::cerr << "running satconf";
 	struct sfl_list *ret = run_satconf(wanted_symbols);
+	std::cerr << "ended running satconf";
 	solution_output = ret;
 	struct sfl_node *node1;
 	sfl_list_for_each(node1, ret) {
@@ -2238,10 +2246,19 @@ void ConflictsView::updateResults(void)
 void ConflictsView::calculateFixes(void)
 {
 	if(conflictsTable->rowCount() == 0)
+	{
+		std::cerr << "table is empty" ;
 		return;
+	}
+	else {
+		std::cerr << "table is not empty" ;
+
+	}
 
 	if (runSatConfAsyncThread == nullptr)
 	{
+		std::cerr << "firing away " ;
+
 		// fire away asynchronous call
 		std::unique_lock<std::mutex> lk{satconf_mutex};
 
@@ -2251,6 +2268,7 @@ void ConflictsView::calculateFixes(void)
 		satconf_cancelled = false;
 		runSatConfAsyncThread = new std::thread(&ConflictsView::runSatConfAsync,this);
 	}else{
+		std::cerr << "interrupting" ;
 		interrupt_rangefix();
 		std::unique_lock<std::mutex> lk{satconf_mutex};
 		satconf_cancellation_cv.wait(lk,[this] {return satconf_cancelled == true;});
