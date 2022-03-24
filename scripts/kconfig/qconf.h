@@ -82,7 +82,6 @@ public slots:
 	void saveSettings(void);
 	void setOptionMode(QAction *action);
 	void setShowName(bool on);
-	// void ShowContextMenu(const QPoint& p);
 
 signals:
 	void menuChanged(struct menu *menu);
@@ -92,7 +91,7 @@ signals:
 	void gotFocus(struct menu *);
 	void showNameChanged(bool on);
 	void selectionChanged(QList<QTreeWidgetItem*> selection);
-	void UpdateConflictsViewColorization();
+	void updateConflictsViewColorization();
 
 public:
 	void updateListAll(void)
@@ -128,7 +127,6 @@ public:
 };
 
 class ConflictsView : public QWidget {
-	// ConfigLineEdit* lineEdit;
 	Q_OBJECT
 	typedef class QWidget Parent;
 public:
@@ -153,7 +151,7 @@ public slots:
 
 
 	void applyFixButtonClick();
-	void UpdateConflictsViewColorization();
+	void updateConflictsViewColorization();
 	void updateResults();
 
 
@@ -174,14 +172,14 @@ public:
 	QTableWidget* conflictsTable;
 	QList<Constraint> constraints;
 
-  // the comobox on the right hand side. used to select a solutio after
-  // getting solution from satconfig
-  QComboBox* solutionSelector{nullptr};
+	// the comobox on the right hand side. used to select a solutio after
+	// getting solution from satconfig
+	QComboBox* solutionSelector{nullptr};
 
-  // the table which shows the selected solution showing variable = New value changes
+	// the table which shows the selected solution showing variable = New value changes
 	QTableWidget* solutionTable{nullptr};
 
-  // Apply fixes button on the solution view
+	// Apply fixes button on the solution view
 	QPushButton* applyFixButton{nullptr};
 
     struct sfl_list * solution_output{nullptr};
@@ -198,10 +196,6 @@ public:
 	std::mutex satconf_mutex;
 	std::condition_variable satconf_cancellation_cv;
 	bool satconf_cancelled{false};
-
-	//colorize the symbols
-	// void ColorizeSolutionTable();
-
 
 };
 
@@ -315,9 +309,9 @@ public:
 public slots:
 	void saveSettings(void);
 	void search(void);
-	void UpdateConflictsViewColorizationFowarder();
+	void updateConflictsViewColorizationFowarder();
 signals:
-	void UpdateConflictsViewColorization();
+	void updateConflictsViewColorization();
 
 
 protected:

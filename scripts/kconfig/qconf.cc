@@ -24,7 +24,6 @@
 
 
 #include <stdlib.h>
-#include <iostream>
 #include <QAbstractItemView>
 #include <QMimeData>
 #include <QBrush>
@@ -550,7 +549,7 @@ void ConfigList::changeValue(ConfigItem* item)
 		}
 		if (oldexpr != newexpr)
 			ConfigList::updateListForAll();
-			emit UpdateConflictsViewColorization();
+			emit updateConflictsViewColorization();
 		break;
 	default:
 		break;
@@ -1273,7 +1272,7 @@ ConfigSearchWindow::ConfigSearchWindow(ConfigMainWindow *parent)
 	connect(list, &ConfigList::menuChanged,
 		parent, &ConfigMainWindow::conflictSelected);
 
-	connect(list,&ConfigList::UpdateConflictsViewColorization,this,&ConfigSearchWindow::UpdateConflictsViewColorizationFowarder);
+	connect(list,&ConfigList::updateConflictsViewColorization,this,&ConfigSearchWindow::updateConflictsViewColorizationFowarder);
 	layout1->addWidget(split);
 
 	QVariant x, y;
@@ -1295,8 +1294,8 @@ ConfigSearchWindow::ConfigSearchWindow(ConfigMainWindow *parent)
 	connect(configApp, &QApplication::aboutToQuit,
 		this, &ConfigSearchWindow::saveSettings);
 }
-void ConfigSearchWindow::UpdateConflictsViewColorizationFowarder(void){
-	emit UpdateConflictsViewColorization();
+void ConfigSearchWindow::updateConflictsViewColorizationFowarder(void){
+	emit updateConflictsViewColorization();
 }
 
 void ConfigSearchWindow::saveSettings(void)
@@ -1383,11 +1382,6 @@ ConfigMainWindow::ConfigMainWindow(void)
 
 	// create config tree
 	configList = new ConfigList(widget, "config");
-	// configList->setSelectionMode(QAbstractItemView::ExtendedSelection);// faya
-	// configList->setContextMenuPolicy(Qt::CustomContextMenu);
-	// connect(list, SIGNAL(customContextMenuRequested(const QPoint &)),
-    //     this, SLOT(ShowContextMenu(const QPoint &)));
-
 	helpText = new ConfigInfoView(widget, "help");
 
 	layout->addWidget(split2);
@@ -1405,8 +1399,8 @@ ConfigMainWindow::ConfigMainWindow(void)
 	*/
 	connect(conflictsView,SIGNAL(conflictSelected(struct menu *)),SLOT(conflictSelected(struct menu *)));
 	connect(conflictsView,SIGNAL(refreshMenu()),SLOT(refreshMenu()));
-	connect(menuList,SIGNAL(UpdateConflictsViewColorization()),conflictsView,SLOT(UpdateConflictsViewColorization()));
-	connect(configList,SIGNAL(UpdateConflictsViewColorization()),conflictsView,SLOT(UpdateConflictsViewColorization()));
+	connect(menuList,SIGNAL(updateConflictsViewColorization()),conflictsView,SLOT(updateConflictsViewColorization()));
+	connect(configList,SIGNAL(updateConflictsViewColorization()),conflictsView,SLOT(updateConflictsViewColorization()));
 
 	setTabOrder(configList, helpText);
 	configList->setFocus();
@@ -2118,8 +2112,6 @@ void ConflictsView::changeSolutionTable(int solution_number){
 		struct symbol_fix* cur_symbol = select_symbol(selected_solution,i);
 
 		QTableWidgetItem* symbol_name = new QTableWidgetItem(cur_symbol->sym->name);
-		auto green = QColor(0,170,0);
-		auto red = QColor(255,0,0);
 
 		solutionTable->setItem(solutionTable->rowCount()-1,0,symbol_name);
 
@@ -2134,9 +2126,9 @@ void ConflictsView::changeSolutionTable(int solution_number){
 			solutionTable->setItem(solutionTable->rowCount()-1,1,symbol_value);
 		}
 	}
-	UpdateConflictsViewColorization();
+	updateConflictsViewColorization();
 }
-void ConflictsView::UpdateConflictsViewColorization(void)
+void ConflictsView::updateConflictsViewColorization(void)
 {
 	auto green = QColor(0,170,0);
 	auto red = QColor(255,0,0);
@@ -2182,7 +2174,7 @@ void ConflictsView::runSatConfAsync()
 	p = static_cast<struct symbol_dvalue*>(calloc(conflictsTable->rowCount(),sizeof(struct symbol_dvalue)));
 	if (!p)
 	{
-		std::cerr << "allocation error";
+		printf("memory allocation error\n");
 		return;
 	}
 
@@ -2201,9 +2193,7 @@ void ConflictsView::runSatConfAsync()
 		sdv_list_add(wanted_symbols,tmp);
 	}
 	fixConflictsAction_->setText("Cancel");
-	std::cerr << "running satconf";
 	struct sfl_list *ret = run_satconf(wanted_symbols);
-	std::cerr << "ended running satconf";
 	solution_output = ret;
 	struct sfl_node *node1;
 	sfl_list_for_each(node1, ret) {
@@ -2247,18 +2237,12 @@ void ConflictsView::calculateFixes(void)
 {
 	if(conflictsTable->rowCount() == 0)
 	{
-		std::cerr << "table is empty" ;
+		printf("table is empty\n");
 		return;
-	}
-	else {
-		std::cerr << "table is not empty" ;
-
 	}
 
 	if (runSatConfAsyncThread == nullptr)
 	{
-		std::cerr << "firing away " ;
-
 		// fire away asynchronous call
 		std::unique_lock<std::mutex> lk{satconf_mutex};
 
@@ -2268,7 +2252,7 @@ void ConflictsView::calculateFixes(void)
 		satconf_cancelled = false;
 		runSatConfAsyncThread = new std::thread(&ConflictsView::runSatConfAsync,this);
 	}else{
-		std::cerr << "interrupting" ;
+		printf("interrupting\n");
 		interrupt_rangefix();
 		std::unique_lock<std::mutex> lk{satconf_mutex};
 		satconf_cancellation_cv.wait(lk,[this] {return satconf_cancelled == true;});
@@ -2277,31 +2261,8 @@ void ConflictsView::calculateFixes(void)
 }
 void ConflictsView::changeAll(void)
 {
-	return;
 	// not implemented for now
-	// std::cerr << "change all clicked" << std::endl;
-	// std::cerr << constraints[0].symbol.toStdString() << std::endl;
-	// if (constraints.length() == 0)
-	// 	return;
-	// // for each constraint in constraints,
-	// // find the symbol* from kconfig,
-	// // call sym_set_tristate_value() if it is tristate or boolean.
-	// for (int i = 0; i < constraints.length() ; i++)
-	// {
-	// 	struct symbol* sym = sym_find(constraints[i].symbol.toStdString().c_str());
-	// 	if(!sym)
-	// 		return;
-	// 	int type = sym_get_type(sym);
-	// 	switch (type) {
-	// 	case S_BOOLEAN:
-	// 	case S_TRISTATE:
-	// 		if (!sym_set_tristate_value(sym, constraints[i].req))
-	// 			return;
-	// 		break;
-	// 	}
-	// }
-
-	// emit(refreshMenu());
+	return;
 }
 
 ConflictsView::~ConflictsView(void)

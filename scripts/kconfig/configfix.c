@@ -129,6 +129,7 @@ int run_satconf_cli(const char *Kconfig_file)
  */
 struct sfl_list *run_satconf(struct sdv_list *symbols)
 {
+	printd("\nConfigfix backend started\n\n");
 	clock_t start, end;
 	double time;
 
