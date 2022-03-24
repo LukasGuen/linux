@@ -172,7 +172,7 @@ public:
 	QTableWidget* conflictsTable;
 	QList<Constraint> constraints;
 
-	// the comobox on the right hand side. used to select a solutio after
+	// the comobox on the right hand side. used to select a solution after
 	// getting solution from satconfig
 	QComboBox* solutionSelector{nullptr};
 
