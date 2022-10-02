@@ -81,8 +81,6 @@ public slots:
 	void saveSettings(void);
 	void setOptionMode(QAction *action);
 	void setShowName(bool on);
-	void selectionChanged(QList<QTreeWidgetItem*> selection);
-	void updateConflictsViewColorization();
 
 signals:
 	void menuChanged(struct menu *menu);
@@ -91,6 +89,8 @@ signals:
 	void parentSelected(void);
 	void gotFocus(struct menu *);
 	void showNameChanged(bool on);
+	void selectionChanged(QList<QTreeWidgetItem*> selection);
+	void updateConflictsViewColorization();
 
 public:
 	void updateListAll(void)
